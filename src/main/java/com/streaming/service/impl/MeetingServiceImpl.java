@@ -1,5 +1,6 @@
 package com.streaming.service.impl;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streaming.dto.MeetingMember;
+import com.streaming.dto.MeetingResponse;
 import com.streaming.dto.ScheduleMeetingDTO;
 import com.streaming.entities.Meeting;
 import com.streaming.entities.User;
@@ -64,7 +66,8 @@ public class MeetingServiceImpl implements MeetingService {
 		meeting.setMembers(getMemberDetails(payload.getCreatorId(), payload.getArtistId()));
 		Meeting savedMeeting = meetingRepo.save(meeting);
 		new Thread(()-> sendEmailInvitation(savedMeeting)).start();
-		return savedMeeting;
+		return new MeetingResponse(meetingUrlPrefix+savedMeeting.getMeetingId(), savedMeeting.getMeetingTitle(), savedMeeting.getMembers(), 
+				Timestamp.valueOf(savedMeeting.getStartDateTime()).getTime(), Timestamp.valueOf(savedMeeting.getEndDateTime()).getTime());
 	}
 
 	private void verifyMeetingUseCases(@Valid ScheduleMeetingDTO payload) {
@@ -105,13 +108,14 @@ public class MeetingServiceImpl implements MeetingService {
 			emailBody.put("qrcode", "data:image/png;base64,"+Base64.getEncoder().encodeToString(qrCode));
 			emailBody.put("guestEmail", guestEmail);
 			emailBody.put("starEmail", starEmail);
+			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (IST)";
 			members.stream().forEach(user->{
 				if (user.getUserType().equals("guest")) {
 					emailBody.put("The Event has been scheduled for star" , emailBody);
-					emailService.sendHtmlMail(guestEmail, "subject", emailBody, "template.html");
+					emailService.sendHtmlMail(guestEmail, emailSubject, emailBody, "template.html");
 				}else if(user.getUserType().equals("star")) {
 					emailBody.put("The Event has been scheduled for guest", emailBody);
-					emailService.sendHtmlMail(starEmail, "subject", emailBody, "template.html");
+					emailService.sendHtmlMail(starEmail, emailSubject, emailBody, "template.html");
 				}
 			});		
 		} catch (Exception e) {
@@ -168,6 +172,7 @@ public class MeetingServiceImpl implements MeetingService {
 	public User getUser(long userId) {
 		List<User> users = new ArrayList<>();
 		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+		users.add(new User(123456, "Prashant", "guest", "prashat.dave@oodles.io"));
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
 	}
