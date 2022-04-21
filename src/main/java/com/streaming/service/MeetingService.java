@@ -12,5 +12,6 @@ public interface MeetingService {
 
 	Object scheduleMeeting(@Valid ScheduleMeetingDTO payload);
 	ResponseEntity<Object> joinMeeting(String meetingId);
+	Object getUserMeeting(long userId);
 	
 }

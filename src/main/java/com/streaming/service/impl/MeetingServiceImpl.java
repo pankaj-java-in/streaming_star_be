@@ -50,7 +50,7 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired EmailService emailService;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
-	private String meetingUrlPrefix="http://localhost:8080/";
+	private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?";
 	
 	@Override
 	public Object scheduleMeeting(@Valid ScheduleMeetingDTO payload) {
@@ -175,6 +175,12 @@ public class MeetingServiceImpl implements MeetingService {
 		users.add(new User(123456, "Prashant", "guest", "prashat.dave@oodles.io"));
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
+	}
+
+	@Override
+	public Object getUserMeeting(long userId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
