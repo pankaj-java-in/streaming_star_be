@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'/>
+
+     <style>
+        body {
+            font-size: 48px;
+        }
+        p{
+            font-size: 14px;
+        }
+        table{
+            border: 1px solid rgb(136, 138, 133);
+        }
+        td{
+            padding-left: 10px;
+            padding-right: 10px;
+            vertical-align: top;
+        }
+        #footer{
+            border-top: 5px solid rgb(61, 48, 206);
+        }
+    </style>
+</head>
+ <body>
+ <table align="center" cellpadding="0" cellspacing="0" width="700" style="border-collapse: collapse;">
+        <tr>
+            <td align="center" bgcolor="lightgrey" colspan="2" style="padding-top: 5px; padding-bottom: 5px">
+				 <img src="https://cs-image.s3.ap-south-1.amazonaws.com/streaming-logo.png" width="400px" height="75px" alt="Error on image load" style="display: block;" />
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-top: 5px">
+                <p style="margin: 0px; font-size: 16px; color: gray; font-weight: bold;">
+                    Meeting Title
+                </p> 
+            </td>
+            <td style="padding-top: 5px">
+              	<p style="margin: 0px; font-size: 16px; font-weight: bold;"
+                  th:text= ${meetingTitle}></p> 
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p style="color: gray;">When </p>
+            </td>
+            <td>
+                <p>
+              	 <!--  <span th:text="${#temporals.format(meetingDateTime, 'dd-MMMM-yyyy HH:mm', new java.util.Locale('en', 'EN'))}"></span> -->
+                     <span th:text="${meetingDateTime}"></span>
+                    <span style='color: gray;'> &nbsp; India Standard Time - Kolkata</span>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p style="color: gray;">Who</p>
+            </td>
+            <td style="vertical-align: top;">
+                <p>
+                    <a href="#">
+                        <span th:text="${starEmail}"></span>
+                    </a><span style="color: gray;"> - star</span><br>
+                    <a href="#">
+                        <span th:text="${guestEmail}"></span>
+                    </a><span style="color: gray;"> - guest</span><br>
+                </p>
+            </td>
+        </tr>
+          <tr>
+            <td>
+                <p style="color: gray;">Message</p>
+            </td>
+            <td>
+                <p>
+                    <span th:text="${message}"></span>
+                </p>
+            </td>
+        </tr>
+         <tr>
+            <td>
+                <p style="color: gray;">Joining info</p>
+            </td>
+            <td>
+                <p>
+                    <span>Join with Oodles Meeting</span><br>
+                </p>
+            </td>
+        </tr>
+        <tr align="center">
+        	<td>
+        		<p>
+        			<span>Join via link</span><br>
+        			 <span th:text="${meetingLink}"></span>
+        		</p>
+        	</td>
+        	<td>
+        		<p>
+        			<span>Join via QR</span><br>
+        		</p>
+        		<img src="../static/qr/QRCode.png"  alt="QA not found" height="250" width="250">
+        	</td>
+        </tr>
+
+        <tr id="footer">
+            <td align="center" bgcolor="lightgrey" colspan="2">
+                <p>Copyright The Streaming Star. All rights reserved.</p>
+            </td>
+        </tr>
+    </table>
+  </body>
+</html>
