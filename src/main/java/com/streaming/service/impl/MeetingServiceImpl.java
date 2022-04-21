@@ -50,7 +50,7 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired EmailService emailService;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
-	private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?";
+	private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
 	
 	@Override
 	public Object scheduleMeeting(@Valid ScheduleMeetingDTO payload) {
