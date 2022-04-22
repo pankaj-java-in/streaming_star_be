@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.streaming.dto.JoinMeetingDTO;
 import com.streaming.dto.ScheduleMeetingDTO;
 import com.streaming.service.MeetingService;
 import com.streaming.utils.Response;
@@ -41,9 +42,9 @@ public class MeetingController {
 //		return Response.generateResponse(HttpStatus.EXPECTATION_FAILED, null, "failed", false);
 //	}
 	
-	@PostMapping("/api/v1/meeting/join/{meetingId}")
-	public ResponseEntity<Object> joinMeeting(@PathVariable String meetingId){
-		ResponseEntity<Object> response = meetingService.joinMeeting(meetingId);
+	@PostMapping("/api/v1/meeting/join")
+	public ResponseEntity<Object> joinMeeting(@RequestBody JoinMeetingDTO payload){
+		ResponseEntity<Object> response = meetingService.joinMeeting(payload);
 		if (Objects.nonNull(response)) {
 			return response;
 		}

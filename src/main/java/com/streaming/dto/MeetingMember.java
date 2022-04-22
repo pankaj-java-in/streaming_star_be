@@ -13,14 +13,19 @@ public class MeetingMember {
 	
 	private long userId;
 	private String name;
+	private String email;
 	private String userType;
+	private String streamId;
 	private boolean audioStatus;
 	private boolean videoStatus;
 	private boolean recordingStatus;
 	
-	public MeetingMember(long userId, String userType) {
+	public MeetingMember(String email, long userId, String userType, String name, String streamId) {
+		this.email=email;
 		this.userId = userId;
 		this.userType = userType;
+		this.name=name;
+		this.streamId=streamId;
 	}
 	
 	

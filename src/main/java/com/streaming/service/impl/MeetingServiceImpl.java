@@ -26,13 +26,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.streaming.dto.JoinMeetingDTO;
 import com.streaming.dto.MeetingMember;
 import com.streaming.dto.MeetingResponse;
 import com.streaming.dto.ScheduleMeetingDTO;
 import com.streaming.entities.Meeting;
 import com.streaming.entities.User;
 import com.streaming.exception.InvalidDataTimeRangeException;
-import com.streaming.exception.InvalidMeetingUrlException;
 import com.streaming.exception.UserNotFoundException;
 import com.streaming.repo.MeetingRepo;
 import com.streaming.service.EmailService;
@@ -50,7 +50,8 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired EmailService emailService;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
-	private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
+	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
+	private String meetingUrlPrefix ="http://localhost/thestreamingstar/outside/join-event?meet_id=";
 	
 	@Override
 	public Object scheduleMeeting(@Valid ScheduleMeetingDTO payload) {
@@ -140,8 +141,8 @@ public class MeetingServiceImpl implements MeetingService {
 	}
 	
 	@Override
-	public ResponseEntity<Object> joinMeeting(String meetingId) {
-		Optional<Meeting> meetingStream = meetingRepo.findByMeetingIdAndDeleted(meetingId, false);
+	public ResponseEntity<Object> joinMeeting(JoinMeetingDTO payload) {
+		Optional<Meeting> meetingStream = meetingRepo.findByMeetingIdAndDeleted(payload.getMeetingId(), false);
 		if (meetingStream.isPresent()) {
 			Meeting meeting = meetingStream.get();
 			if(meeting.getStartDateTime().isAfter(LocalDateTime.now())){
@@ -149,17 +150,19 @@ public class MeetingServiceImpl implements MeetingService {
 			}else if(meeting.getEndDateTime().isBefore(LocalDateTime.now())) {
 				return Response.generateResponse(HttpStatus.OK, null, "Meeting has expired.", false);
 			}else {
-				inMeetingMembers.addMemberInMeeting(new MeetingMember(12345,"User"), meetingId);
-				Set<MeetingMember> membersOfMeeting = inMeetingMembers.getMembersOfMeeting(meetingId);
-				return Response.generateResponse(HttpStatus.OK, membersOfMeeting, "You have joined", true);
+				Optional<User> userStream = meeting.getMembers().stream().filter(mem->mem.getEmail().equals(payload.getEmail())).findFirst();
+				if (userStream.isPresent()) {
+					User currentUser = userStream.get();
+					inMeetingMembers.addMemberInMeeting(new MeetingMember(currentUser.getEmail(), currentUser.getUserId(),currentUser.getUserType(), 
+							currentUser.getName(), payload.getStreamId()), payload.getMeetingId() );
+					Set<MeetingMember> membersOfMeeting = inMeetingMembers.getMembersOfMeeting(payload.getMeetingId());
+					return Response.generateResponse(HttpStatus.OK, membersOfMeeting, "You have joined", true);
+				}else {
+					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "You are not member of this event.", false);
+				}
 			}
 		}
 		return null;
-	}
-	
-	public String getMeetingIdWithUrl(String url){
-		//return rtmpUrl.substring(rtmpUrl.lastIndexOf('/')+1, rtmpUrl.length());
-		throw new InvalidMeetingUrlException("Invalid meeting url.");
 	}
 	
 	private List<User> getMemberDetails(long creatorId, long artistId) {
@@ -179,7 +182,6 @@ public class MeetingServiceImpl implements MeetingService {
 
 	@Override
 	public Object getUserMeeting(long userId) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

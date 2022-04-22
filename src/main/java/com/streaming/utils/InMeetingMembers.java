@@ -14,7 +14,8 @@ public class InMeetingMembers {
 	public void addMemberInMeeting(MeetingMember member, String meetingId) {
 		if (members.containsKey(meetingId)) {
 			Set<MeetingMember> listOfMember = members.get(meetingId);
-			if(!listOfMember.stream().anyMatch(mem->mem.getUserId()==member.getUserId())) {	listOfMember.add(member);}
+			listOfMember.removeIf(mem->mem.getUserId()==member.getUserId());
+			listOfMember.add(member);
 		}else {
 			Set<MeetingMember> listOfMember = new HashSet<>();
 			listOfMember.add(member);
