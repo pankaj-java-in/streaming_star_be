@@ -154,14 +154,15 @@ public class MeetingServiceImpl implements MeetingService {
 	public ResponseEntity<Object> joinMeeting(JoinMeetingDTO payload) {
 		Optional<Meeting> meetingStream = meetingRepo.findByMeetingIdAndDeleted(payload.getMeetingId(), false);
 		if (meetingStream.isPresent()) {
+			Map<String, Object> message = new HashMap<>();
 			Meeting meeting = meetingStream.get();
 			if(meeting.getStartDateTime().isAfter(LocalDateTime.now())){
-				Map<String, Object> message = new HashMap<>();
 				message.put("string", "Event will be start on the scheduled time.");
 				message.put("timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
 				return Response.generateResponse(HttpStatus.OK, null, message , false);
 			}else if(meeting.getEndDateTime().isBefore(LocalDateTime.now())) {
-				return Response.generateResponse(HttpStatus.OK, null, "Meeting has expired.", false);
+				message.put("string", "Meeting has expired.");
+				return Response.generateResponse(HttpStatus.OK, null, message, false);
 			}else {
 				Optional<User> userStream = meeting.getMembers().stream().filter(mem->mem.getEmail().equals(payload.getEmail())).findFirst();
 				if (userStream.isPresent()) {
@@ -169,9 +170,11 @@ public class MeetingServiceImpl implements MeetingService {
 					inMeetingMembers.addMemberInMeeting(new MeetingMember(currentUser.getEmail(), currentUser.getUserId(),currentUser.getUserType(), 
 							currentUser.getName(), payload.getStreamId()), payload.getMeetingId() );
 					Set<MeetingMember> membersOfMeeting = inMeetingMembers.getMembersOfMeeting(payload.getMeetingId());
-					return Response.generateResponse(HttpStatus.OK, membersOfMeeting, "You have joined", true);
+					message.put("string", "You have joined");
+					return Response.generateResponse(HttpStatus.OK, membersOfMeeting, message, true);
 				}else {
-					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "You are not member of this event.", false);
+					message.put("string", "You are not member of this event.");
+					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, message, false);
 				}
 			}
 		}
