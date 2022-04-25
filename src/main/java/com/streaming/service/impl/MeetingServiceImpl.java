@@ -156,7 +156,10 @@ public class MeetingServiceImpl implements MeetingService {
 		if (meetingStream.isPresent()) {
 			Meeting meeting = meetingStream.get();
 			if(meeting.getStartDateTime().isAfter(LocalDateTime.now())){
-				return Response.generateResponse(HttpStatus.OK, null, "Event will be start on the scheduled time - " + meeting.getStartDateTime(), false);
+				Map<String, Object> message = new HashMap<>();
+				message.put("string", "Event will be start on the scheduled time.");
+				message.put("timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
+				return Response.generateResponse(HttpStatus.OK, null, message , false);
 			}else if(meeting.getEndDateTime().isBefore(LocalDateTime.now())) {
 				return Response.generateResponse(HttpStatus.OK, null, "Meeting has expired.", false);
 			}else {

@@ -36,6 +36,6 @@ public class MeetingController {
 		if (Objects.nonNull(response)) {
 			return response;
 		}
-		return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "Meeting Not Found.", false);
+		return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "Event Not Found.", false);
 	}
 }
