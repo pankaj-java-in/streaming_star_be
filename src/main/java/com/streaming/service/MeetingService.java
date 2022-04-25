@@ -12,7 +12,6 @@ import com.streaming.dto.ScheduleMeetingDTO;
 public interface MeetingService {
 
 	Object scheduleMeeting(@Valid ScheduleMeetingDTO payload);
-	Object getUserMeeting(long userId);
 	ResponseEntity<Object> joinMeeting(JoinMeetingDTO payload);
 	
 }

@@ -19,6 +19,7 @@ public class MeetingMember {
 	private boolean audioStatus;
 	private boolean videoStatus;
 	private boolean recordingStatus;
+	private boolean online=false;
 	
 	public MeetingMember(String email, long userId, String userType, String name, String streamId) {
 		this.email=email;

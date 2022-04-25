@@ -36,7 +36,7 @@
         <tr>
             <td style="padding-top: 5px">
                 <p style="margin: 0px; font-size: 16px; color: gray; font-weight: bold;">
-                    Meeting Title
+                    Event Title
                 </p> 
             </td>
             <td style="padding-top: 5px">
@@ -71,38 +71,30 @@
                 </p>
             </td>
         </tr>
-          <tr>
-            <td>
-                <p style="color: gray;">Message</p>
-            </td>
-            <td>
-                <p>
-                    <span th:text="${message}"></span>
-                </p>
-            </td>
-        </tr>
+       
          <tr>
             <td>
                 <p style="color: gray;">Joining info</p>
             </td>
             <td>
                 <p>
-                    <span>Join with Oodles Meeting</span><br>
+                    <span style="color: gray;">Join with The streaming star Meeting</span><br>
                 </p>
             </td>
         </tr>
         <tr align="center">
         	<td>
         		<p>
-        			<span>Join via link</span><br>
+        			<span>Join via link</span><br><br>
         			 <span th:text="${meetingLink}"></span>
         		</p>
         	</td>
         	<td>
         		<p>
         			<span>Join via QR</span><br>
+        			<img th:src="${qrCodeUrl}"  alt="QA not found" height="250" width="250">
         		</p>
-        		<img src="../static/qr/QRCode.png"  alt="QA not found" height="250" width="250">
+        		
         	</td>
         </tr>
 

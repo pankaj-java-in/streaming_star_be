@@ -9,8 +9,16 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 
+import com.streaming.utils.InMeetingMembers;
+
 public class ConnectDisconnectEvent implements ChannelInterceptor {
 	
+	private final InMeetingMembers inMeetingMembers;
+	
+	public ConnectDisconnectEvent(InMeetingMembers inMeetingMembers) {
+		this.inMeetingMembers=inMeetingMembers;
+	}
+
 	@Override
 	public Message<?> preSend(Message<?> message, MessageChannel channel) {
 		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
@@ -26,12 +34,18 @@ public class ConnectDisconnectEvent implements ChannelInterceptor {
 	}
 
 	private void handleSessionConnected(StompHeaderAccessor accessor) {
-		// TODO Auto-generated method stub
-		
+		String userEmail = accessor.getFirstNativeHeader("user");
+		String meetingId = accessor.getFirstNativeHeader("meetingId");
+		if (Objects.nonNull(meetingId) && Objects.nonNull(userEmail)) {
+			inMeetingMembers.setOnlineIStatusIfUserExist(userEmail, meetingId, true);
+		}
 	}
 
 	private void handleSessionDisconnect(StompHeaderAccessor accessor) {
-		// TODO Auto-generated method stub
-		
+		String userEmail = accessor.getFirstNativeHeader("user");
+		String meetingId = accessor.getFirstNativeHeader("meetingId");
+		if (Objects.nonNull(meetingId) && Objects.nonNull(userEmail)) {
+			inMeetingMembers.setOnlineIStatusIfUserExist(userEmail, meetingId, false);
+		}
 	}
 }

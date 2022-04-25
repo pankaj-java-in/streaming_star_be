@@ -7,11 +7,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.streaming.dto.JoinMeetingDTO;
@@ -23,7 +20,7 @@ import com.streaming.utils.Response;
 public class MeetingController {
 	
 	@Autowired MeetingService meetingService;
-	
+		
 	@PostMapping("/api/v1/meeting")
 	public ResponseEntity<Object> ScheduleMeeting(@Valid @RequestBody ScheduleMeetingDTO payload){
 		Object response = meetingService.scheduleMeeting(payload);
@@ -32,15 +29,6 @@ public class MeetingController {
 		}
 		return Response.generateResponse(HttpStatus.EXPECTATION_FAILED, null, "failed", false);
 	}
-	
-//	@GetMapping("/api/v1/meeting")
-//	public ResponseEntity<Object> getUserMeetings(@RequestParam long userId){
-//		Object response = meetingService.getUserMeeting(userId);
-//		if (Objects.nonNull(response)) {
-//			return Response.generateResponse(HttpStatus.OK, response, "success", true);
-//		}
-//		return Response.generateResponse(HttpStatus.EXPECTATION_FAILED, null, "failed", false);
-//	}
 	
 	@PostMapping("/api/v1/meeting/join")
 	public ResponseEntity<Object> joinMeeting(@RequestBody JoinMeetingDTO payload){

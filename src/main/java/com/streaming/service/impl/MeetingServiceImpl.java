@@ -1,5 +1,7 @@
 package com.streaming.service.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -7,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +22,13 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streaming.dto.JoinMeetingDTO;
 import com.streaming.dto.MeetingMember;
@@ -48,10 +52,15 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired ObjectMapper mapper;
 	@Autowired InMeetingMembers inMeetingMembers;
 	@Autowired EmailService emailService;
+	@Autowired AmazonS3 amazonS3;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
 	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
 	private String meetingUrlPrefix ="http://localhost/thestreamingstar/outside/join-event?meet_id=";
+	
+	@Value("${cloud.aws.bucket.name}")
+	private String bucketName;
+	private String endpointUrl = "https://cs-image.s3.ap-south-1.amazonaws.com/streaming/";
 	
 	@Override
 	public Object scheduleMeeting(@Valid ScheduleMeetingDTO payload) {
@@ -80,6 +89,8 @@ public class MeetingServiceImpl implements MeetingService {
 			throw new UserNotFoundException("User not found with id - " + payload.getArtistId());
 		}else if(payload.getCreatorId()==payload.getArtistId()) {
 			throw new IllegalArgumentException("Must be different creatorId and ArtistId.");
+		}else if(payload.getStartDateTime().isBefore(LocalDateTime.now()) || payload.getEndDateTime().isBefore(LocalDateTime.now())) {
+			throw new InvalidDataTimeRangeException("Meeting start or end date time must be after current date time.");
 		}
 	}
 
@@ -99,16 +110,14 @@ public class MeetingServiceImpl implements MeetingService {
 		try {
 			List<User> members = meeting.getMembers();
 			String guestEmail = members.stream().filter(user->user.getUserType().equals("guest")).map(user->user.getEmail()).findFirst().get();
-			String starEmail = members.stream().filter(user->user.getUserType().equals("star")).map(user->user.getEmail()).findFirst().get();
-			QRCodeGenerator.generateQRCodeImage(meetingUrlPrefix+meeting.getMeetingId(), 250, 250, "./src/main/resources/static/QRCode.png");
-			byte[] qrCode = QRCodeGenerator.getQRCodeImage(meetingUrlPrefix+meeting.getMeetingId(), 250, 250);
+			User star = members.stream().filter(user->user.getUserType().equals("star")).findFirst().get();
 			Map<String, Object> emailBody = new HashMap<>();
 			emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId());
 			emailBody.put("meetingDateTime", getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime()));
 			emailBody.put("meetingTitle", meeting.getMeetingTitle());
-			emailBody.put("qrcode", "data:image/png;base64,"+Base64.getEncoder().encodeToString(qrCode));
+			emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+".png");
 			emailBody.put("guestEmail", guestEmail);
-			emailBody.put("starEmail", starEmail);
+			emailBody.put("starEmail", star.getName());
 			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (IST)";
 			members.stream().forEach(user->{
 				if (user.getUserType().equals("guest")) {
@@ -116,9 +125,10 @@ public class MeetingServiceImpl implements MeetingService {
 					emailService.sendHtmlMail(guestEmail, emailSubject, emailBody, "template.html");
 				}else if(user.getUserType().equals("star")) {
 					emailBody.put("The Event has been scheduled for guest", emailBody);
-					emailService.sendHtmlMail(starEmail, emailSubject, emailBody, "template.html");
+					emailService.sendHtmlMail(star.getEmail(), emailSubject, emailBody, "template.html");
 				}
 			});		
+			generateQRAndUpload(meeting.getMeetingId()+".png", meetingUrlPrefix+meeting.getMeetingId());
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -165,6 +175,19 @@ public class MeetingServiceImpl implements MeetingService {
 		return null;
 	}
 	
+	private String generateQRAndUpload(String qrName, String url) {
+		File file = new File(qrName);
+		try (FileOutputStream iofs = new FileOutputStream(file)) {
+			byte[] qrCodeImage = QRCodeGenerator.getQRCodeImage(url, 250, 250);
+			iofs.write(qrCodeImage);
+			amazonS3.putObject(new PutObjectRequest(bucketName, file.getName(), file));
+			file.delete();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	private List<User> getMemberDetails(long creatorId, long artistId) {
 		List<User> users = new ArrayList<>();
 		users.add(getUser(creatorId));
@@ -179,10 +202,4 @@ public class MeetingServiceImpl implements MeetingService {
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
 	}
-
-	@Override
-	public Object getUserMeeting(long userId) {
-		return null;
-	}
-
 }
