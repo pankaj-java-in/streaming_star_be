@@ -17,6 +17,7 @@ public class WebSocketController {
 	
 	@MessageMapping("/event.{eventId}")
 	public void chatRoom(@DestinationVariable String eventId, Message<Map<String, Object>> message) {
+		System.out.println(eventId);
 		Map<String, Object> payload = message.getPayload();
 		String actionType = String.valueOf(payload.get("actionType"));
 		switch (actionType) {
@@ -39,5 +40,6 @@ public class WebSocketController {
 		response.put("actionType", "PLAY_STREAM");
 		String destination = "/topic/event."+eventId;
 		template.convertAndSend(destination, response);
+		System.out.println(response);
 	}
 }

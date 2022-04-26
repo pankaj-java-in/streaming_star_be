@@ -206,6 +206,8 @@ public class MeetingServiceImpl implements MeetingService {
 		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
 		users.add(new User(123456, "Prashant", "guest", "prashat.dave@oodles.io"));
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
+		users.add(new User(2, "Shubhmoy", "guest", "shub@viak.nl"));
+		users.add(new User(1, "Kos", "star", "thestreamingstar@viak.nl"));
 		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
 	}
 }
