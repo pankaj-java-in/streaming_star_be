@@ -75,7 +75,7 @@ const getMeetingStatus = ()=>{
   redirect: 'follow'
   };
 
-  fetch("http://localhost:8080/api/v1/meeting/join", requestOptions)
+  fetch("http://13.41.68.244:8080/api/v1/meeting/join", requestOptions)
   .then(response => response.text())
   .then(result => getData(result))
   .catch(error => console.log('error', error));
@@ -83,7 +83,7 @@ const getMeetingStatus = ()=>{
 }
 }
 const getData = (data) =>{
-  url = "http://localhost:8080/room?roomName="+meetId+"&streamName="+streamName.value;
+  url = "http://13.41.68.244:8080/room?roomName="+meetId+"&streamName="+streamName.value;
   let apiData = JSON.parse(data);
   if(apiData.success){
     window.location = url 
