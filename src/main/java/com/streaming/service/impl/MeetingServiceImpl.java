@@ -56,7 +56,7 @@ public class MeetingServiceImpl implements MeetingService {
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
 	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
-	private String meetingUrlPrefix ="http://localhost/thestreamingstar/outside/join-event?meet_id=";
+	private String meetingUrlPrefix ="http://13.41.68.244:8080/join?meetId=";
 	
 	@Value("${cloud.aws.bucket.name}")
 	private String bucketName;
