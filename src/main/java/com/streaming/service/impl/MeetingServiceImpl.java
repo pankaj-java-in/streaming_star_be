@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -135,19 +135,28 @@ public class MeetingServiceImpl implements MeetingService {
 	}
 
 	private String getMeetingDateTime(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-		ZonedDateTime fromDate = ZonedDateTime.of(startDateTime, ZoneId.of("UTC"));
-		ZonedDateTime toDate = ZonedDateTime.of(endDateTime, ZoneId.of("UTC"));
-		String fromDateInIST = fromDate.format(
-				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
-		String toDateInIST = toDate.format(
-				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
-		String fromTimeInIST = fromDate.format(
-				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
-		String toTimeInIST = toDate.format(
-				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
-		return (fromTimeInIST.contains("pm") || fromTimeInIST.contains("am") && toTimeInIST.contains("am"))
-				? fromDateInIST + " at " + fromTimeInIST + " to " + toDateInIST + " - " + toTimeInIST
-				: fromDateInIST + " at " + fromTimeInIST + " - " + toTimeInIST;
+		ZonedDateTime startDate =startDateTime.atZone(ZoneId.of("UTC"))
+				.withZoneSameInstant(TimeZone.getTimeZone("Europe/Copenhagen").toZoneId());
+		
+		ZonedDateTime endTime =endDateTime.atZone(ZoneId.of("UTC"))
+				.withZoneSameInstant(TimeZone.getTimeZone("Europe/Copenhagen").toZoneId());
+		
+		String start = DateTimeFormatter.ofPattern("MMMM-dd-yyyy 'at' HH:mm").format(startDate).toString();
+		String end = DateTimeFormatter.ofPattern("HH:mm").format(endTime).toString();
+		return start + " to " + end;
+//		ZonedDateTime fromDate = ZonedDateTime.of(startDateTime, ZoneId.of("UTC"));
+//		ZonedDateTime toDate = ZonedDateTime.of(endDateTime, ZoneId.of("UTC"));
+//		String fromDateInIST = fromDate.format(
+//				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
+//		String toDateInIST = toDate.format(
+//				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
+//		String fromTimeInIST = fromDate.format(
+//				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
+//		String toTimeInIST = toDate.format(
+//				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
+//		return (fromTimeInIST.contains("pm") || fromTimeInIST.contains("am") && toTimeInIST.contains("am"))
+//				? fromDateInIST + " at " + fromTimeInIST + " to " + toDateInIST + " - " + toTimeInIST
+//				: fromDateInIST + " at " + fromTimeInIST + " - " + toTimeInIST;
 	}
 		
 	@Override
