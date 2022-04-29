@@ -114,11 +114,11 @@ public class MeetingServiceImpl implements MeetingService {
 			Map<String, Object> emailBody = new HashMap<>();
 			emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId());
 			emailBody.put("meetingDateTime", getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime()));
-			emailBody.put("meetingTitle", meeting.getMeetingTitle());
+			emailBody.put("meetingTitle", "Untitled Event to Star and Guest");
 			emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+".png");
 			emailBody.put("guestEmail", guestEmail);
 			emailBody.put("starEmail", star.getName());
-			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (IST)";
+			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (CEST)";
 			members.stream().forEach(user->{
 				if (user.getUserType().equals("guest")) {
 					emailBody.put("The Event has been scheduled for star" , emailBody);
@@ -138,18 +138,18 @@ public class MeetingServiceImpl implements MeetingService {
 		ZonedDateTime fromDate = ZonedDateTime.of(startDateTime, ZoneId.of("UTC"));
 		ZonedDateTime toDate = ZonedDateTime.of(endDateTime, ZoneId.of("UTC"));
 		String fromDateInIST = fromDate.format(
-				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Asia/Kolkata")));
+				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
 		String toDateInIST = toDate.format(
-				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Asia/Kolkata")));
+				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
 		String fromTimeInIST = fromDate.format(
-				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Asia/Kolkata")));
+				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
 		String toTimeInIST = toDate.format(
-				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Asia/Kolkata")));
+				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
 		return (fromTimeInIST.contains("pm") || fromTimeInIST.contains("am") && toTimeInIST.contains("am"))
 				? fromDateInIST + " at " + fromTimeInIST + " to " + toDateInIST + " - " + toTimeInIST
 				: fromDateInIST + " at " + fromTimeInIST + " - " + toTimeInIST;
 	}
-	
+		
 	@Override
 	public ResponseEntity<Object> joinMeeting(JoinMeetingDTO payload) {
 		Optional<Meeting> meetingStream = meetingRepo.findByMeetingIdAndDeleted(payload.getMeetingId(), false);
@@ -205,6 +205,10 @@ public class MeetingServiceImpl implements MeetingService {
 		List<User> users = new ArrayList<>();
 		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
 		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
+//		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+//		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
+		
+		
 //		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
 //		users.add(new User(123456, "Prashant", "guest", "prashat.dave@oodles.io"));
 //		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
