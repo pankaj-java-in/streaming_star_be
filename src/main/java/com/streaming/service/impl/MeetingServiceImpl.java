@@ -180,7 +180,7 @@ public class MeetingServiceImpl implements MeetingService {
 	private String generateQRAndUpload(String qrName, String url) {
 		File file = new File(qrName);
 		try (FileOutputStream iofs = new FileOutputStream(file)) {
-			byte[] qrCodeImage = QRCodeGenerator.getQRCodeImage(url, 250, 250);
+			byte[] qrCodeImage = QRCodeGenerator.getQRCodeImage(url, 270, 270);
 			iofs.write(qrCodeImage);
 			amazonS3.putObject(new PutObjectRequest(bucketName, file.getName(), file));
 			file.delete();
@@ -210,7 +210,11 @@ public class MeetingServiceImpl implements MeetingService {
 //		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
 //		users.add(new User(12345678, "Shubhmoy", "guest", "shubhmoykumar.garg@oodles.io"));
 //		users.add(new User(1, "Kos", "star", "thestreamingstar@viak.nl"));
-		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
+		 Optional<User> userStream = users.stream().filter(user->user.getUserId()==userId).findFirst();
+		if (userStream.isPresent()) {
+			return userStream.get();
+		}
+		throw new UserNotFoundException("User not found with email - " + userId);
 	}
 	
 	public User getUser(String email) {
@@ -219,9 +223,9 @@ public class MeetingServiceImpl implements MeetingService {
 //		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
 		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
-		User userData = users.stream().filter(user->user.getEmail().equals(email)).findFirst().get();
-		if (Objects.nonNull(userData)) {
-			return userData;
+		Optional<User> userStream = users.stream().filter(user->user.getEmail().equals(email)).findFirst();
+		if (userStream.isPresent()) {
+			return userStream.get();
 		}
 		throw new UserNotFoundException("User not found with email - " + email);
 	}
