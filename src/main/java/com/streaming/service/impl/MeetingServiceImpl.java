@@ -54,7 +54,7 @@ public class MeetingServiceImpl implements MeetingService {
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
 	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/event?meet_id=";
-	private String meetingUrlPrefix="http://localhost/thestreamingstars/outside/event?meet_id=";
+	private String meetingUrlPrefix="http://localhost/thestreamingstars/outside/join-event?meet_id=";
 	//private String meetingUrlPrefix ="http://13.41.68.244:8080/join?meetId=";
 	
 	@Value("${cloud.aws.bucket.name}")
@@ -72,7 +72,8 @@ public class MeetingServiceImpl implements MeetingService {
 		meeting.setEndDateTime(payload.getEndDateTime());
 		meeting.setCreatorId(meeting.getCreatorId());
 		meeting.setMembers(getMemberDetails(payload.getCreatorId(), payload.getArtistId()));
-		meeting.setQrcode(endpointUrl+meeting.getMeetingId()+".png");
+		meeting.setGuestQrcode(endpointUrl+meeting.getMeetingId()+"guest.png");
+		meeting.setStarQrcode(endpointUrl+meeting.getMeetingId()+"star.png");
 		Meeting savedMeeting = meetingRepo.save(meeting);
 		new Thread(()-> sendEmailInvitation(savedMeeting)).start();
 		return new MeetingResponse(meetingUrlPrefix+savedMeeting.getMeetingId()+ "&user="+ getUser(payload.getCreatorId()).getEmail(), 
@@ -109,22 +110,24 @@ public class MeetingServiceImpl implements MeetingService {
 			Map<String, Object> emailBody = new HashMap<>();
 			emailBody.put("meetingDateTime", getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime()));
 			emailBody.put("meetingTitle", "Untitled Event to Star and Guest");
-			emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+".png");
 			emailBody.put("guestEmail", guest.getEmail());
 			emailBody.put("starEmail", star.getName());
 			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (CEST)";
 			members.stream().forEach(user->{
 				if (user.getUserType().equals("guest")) {
+					generateQRAndUpload(meeting.getMeetingId()+"guest.png",  meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ guest.getEmail());
+					emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+"guest.png");
 					emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ guest.getEmail());
-					emailBody.put("The Event has been scheduled for star" , emailBody);
+					emailBody.put("The Event has been scheduled for guest" , emailBody);
 					emailService.sendHtmlMail(guest.getEmail(), emailSubject, emailBody, "template.html");
 				}else if(user.getUserType().equals("star")) {
+					generateQRAndUpload(meeting.getMeetingId()+"star.png",  meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ star.getEmail());
+					emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+"star.png");
 					emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ star.getEmail());
-					emailBody.put("The Event has been scheduled for guest", emailBody);
+					emailBody.put("The Event has been scheduled for star", emailBody);
 					emailService.sendHtmlMail(star.getEmail(), emailSubject, emailBody, "template.html");
 				}
 			});		
-			generateQRAndUpload(meeting.getMeetingId()+".png", meetingUrlPrefix+meeting.getMeetingId());
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -149,7 +152,7 @@ public class MeetingServiceImpl implements MeetingService {
 			Map<String, Object> message = new HashMap<>();
 			Meeting meeting = meetingStream.get();
 			if(meeting.getStartDateTime().isAfter(LocalDateTime.now())){
-				message.put("qrcode", meeting.getQrcode());
+				message.put("qrcode", getUser(payload.getEmail()).getUserType().equals("star") ? meeting.getStarQrcode() : meeting.getGuestQrcode());
 				message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
 				message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
 				return Response.generateResponse(HttpStatus.OK, message, "Event will be start on scheduled time." , false);
@@ -161,7 +164,7 @@ public class MeetingServiceImpl implements MeetingService {
 					User currentUser = userStream.get();
 					inMeetingMembers.addMemberInMeeting(new MeetingMember(currentUser.getEmail(), currentUser.getUserId(),currentUser.getUserType(), 
 							currentUser.getName(), payload.getStreamId()), payload.getMeetingId() );
-					message.put("qrcode", meeting.getQrcode());
+					message.put("qrcode", getUser(payload.getEmail()).getUserType().equals("star") ? meeting.getStarQrcode() : meeting.getGuestQrcode());
 					message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
 					message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
 					return Response.generateResponse(HttpStatus.OK, message, "Valid url", true);
@@ -198,7 +201,7 @@ public class MeetingServiceImpl implements MeetingService {
 //		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
 //		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
 		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
-		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
+		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		
 		
 //		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
@@ -207,5 +210,14 @@ public class MeetingServiceImpl implements MeetingService {
 //		users.add(new User(12345678, "Shubhmoy", "guest", "shubhmoykumar.garg@oodles.io"));
 //		users.add(new User(1, "Kos", "star", "thestreamingstar@viak.nl"));
 		return users.stream().filter(user->user.getUserId()==userId).findFirst().get();
+	}
+	
+	public User getUser(String email) {
+		List<User> users = new ArrayList<>();
+//		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
+//		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
+		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
+		return users.stream().filter(user->user.getEmail()==email).findFirst().get();
 	}
 }

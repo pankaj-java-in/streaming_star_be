@@ -23,7 +23,8 @@ public class Meeting {
 	@Indexed(unique = true)
 	private String meetingId;
 	private String meetingTitle;
-	private String qrcode;
+	private String guestQrcode;
+	private String starQrcode;
 	private List<User> members;
 	private LocalDateTime createDateTime;
 	private LocalDateTime startDateTime;
