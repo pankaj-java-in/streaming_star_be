@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -218,6 +219,10 @@ public class MeetingServiceImpl implements MeetingService {
 //		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
 		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
 		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
-		return users.stream().filter(user->user.getEmail()==email).findFirst().get();
+		User userData = users.stream().filter(user->user.getEmail().equals(email)).findFirst().get();
+		if (Objects.nonNull(userData)) {
+			return userData;
+		}
+		throw new UserNotFoundException("User not found with email - " + email);
 	}
 }
