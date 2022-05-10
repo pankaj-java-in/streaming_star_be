@@ -1,7 +1,5 @@
 package com.streaming.controller;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -35,11 +33,9 @@ public class MeetingController {
 	@PostMapping("/api/v1/meeting/join")
 	public ResponseEntity<Object> joinMeeting(@RequestBody JoinMeetingDTO payload){
 		ResponseEntity<Object> response = meetingService.joinMeeting(payload);
-		Map<String, Object> message = new HashMap<>();
 		if (Objects.nonNull(response)) {
 			return response;
 		}
-		message.put("string", "Event Not Found.");
-		return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, message, false);
+		return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "Event Not Found !!", false);
 	}
 }

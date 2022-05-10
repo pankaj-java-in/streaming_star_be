@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -55,8 +53,9 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired AmazonS3 amazonS3;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
-	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
-	private String meetingUrlPrefix ="http://13.41.68.244:8080/join?meetId=";
+	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/event?meet_id=";
+	private String meetingUrlPrefix="http://localhost/thestreamingstars/outside/event?meet_id=";
+	//private String meetingUrlPrefix ="http://13.41.68.244:8080/join?meetId=";
 	
 	@Value("${cloud.aws.bucket.name}")
 	private String bucketName;
@@ -71,13 +70,14 @@ public class MeetingServiceImpl implements MeetingService {
 		meeting.setCreateDateTime(LocalDateTime.now());
 		meeting.setStartDateTime(payload.getStartDateTime());
 		meeting.setEndDateTime(payload.getEndDateTime());
-		meeting.setPasscode(getMeetingPasscode());
 		meeting.setCreatorId(meeting.getCreatorId());
 		meeting.setMembers(getMemberDetails(payload.getCreatorId(), payload.getArtistId()));
+		meeting.setQrcode(endpointUrl+meeting.getMeetingId()+".png");
 		Meeting savedMeeting = meetingRepo.save(meeting);
 		new Thread(()-> sendEmailInvitation(savedMeeting)).start();
-		return new MeetingResponse(meetingUrlPrefix+savedMeeting.getMeetingId(), savedMeeting.getMeetingTitle(), savedMeeting.getMembers(), 
-				Timestamp.valueOf(savedMeeting.getStartDateTime()).getTime(), Timestamp.valueOf(savedMeeting.getEndDateTime()).getTime());
+		return new MeetingResponse(meetingUrlPrefix+savedMeeting.getMeetingId()+ "&user="+ getUser(payload.getCreatorId()).getEmail(), 
+				savedMeeting.getMeetingTitle(), savedMeeting.getMembers(),  Timestamp.valueOf(savedMeeting.getStartDateTime()).getTime(),
+				Timestamp.valueOf(savedMeeting.getEndDateTime()).getTime());
 	}
 
 	private void verifyMeetingUseCases(@Valid ScheduleMeetingDTO payload) {
@@ -101,29 +101,25 @@ public class MeetingServiceImpl implements MeetingService {
 		return block1+"-"+block2+"-"+block3;
 	}
 	
-	private String getMeetingPasscode() {
-		Random r = new Random(System.currentTimeMillis());
-	    return String.valueOf(1000000000 + r.nextInt(2000000000)*2);
-	}
-	
 	private void sendEmailInvitation(Meeting meeting) {
 		try {
 			List<User> members = meeting.getMembers();
-			String guestEmail = members.stream().filter(user->user.getUserType().equals("guest")).map(user->user.getEmail()).findFirst().get();
+			User guest = members.stream().filter(user->user.getUserType().equals("guest")).findFirst().get();
 			User star = members.stream().filter(user->user.getUserType().equals("star")).findFirst().get();
 			Map<String, Object> emailBody = new HashMap<>();
-			emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId());
 			emailBody.put("meetingDateTime", getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime()));
 			emailBody.put("meetingTitle", "Untitled Event to Star and Guest");
 			emailBody.put("qrCodeUrl", endpointUrl+meeting.getMeetingId()+".png");
-			emailBody.put("guestEmail", guestEmail);
+			emailBody.put("guestEmail", guest.getEmail());
 			emailBody.put("starEmail", star.getName());
 			String emailSubject = "Invitation: "+meeting.getMeetingTitle()+" @ " +getMeetingDateTime(meeting.getStartDateTime(), meeting.getEndDateTime())+" (CEST)";
 			members.stream().forEach(user->{
 				if (user.getUserType().equals("guest")) {
+					emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ guest.getEmail());
 					emailBody.put("The Event has been scheduled for star" , emailBody);
-					emailService.sendHtmlMail(guestEmail, emailSubject, emailBody, "template.html");
+					emailService.sendHtmlMail(guest.getEmail(), emailSubject, emailBody, "template.html");
 				}else if(user.getUserType().equals("star")) {
+					emailBody.put("meetingLink", meetingUrlPrefix+meeting.getMeetingId()+ "&user="+ star.getEmail());
 					emailBody.put("The Event has been scheduled for guest", emailBody);
 					emailService.sendHtmlMail(star.getEmail(), emailSubject, emailBody, "template.html");
 				}
@@ -144,19 +140,6 @@ public class MeetingServiceImpl implements MeetingService {
 		String start = DateTimeFormatter.ofPattern("MMMM-dd-yyyy 'at' HH:mm").format(startDate).toString();
 		String end = DateTimeFormatter.ofPattern("HH:mm").format(endTime).toString();
 		return start + " to " + end;
-//		ZonedDateTime fromDate = ZonedDateTime.of(startDateTime, ZoneId.of("UTC"));
-//		ZonedDateTime toDate = ZonedDateTime.of(endDateTime, ZoneId.of("UTC"));
-//		String fromDateInIST = fromDate.format(
-//				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
-//		String toDateInIST = toDate.format(
-//				DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withZone(ZoneId.of("Europe/Copenhagen")));
-//		String fromTimeInIST = fromDate.format(
-//				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
-//		String toTimeInIST = toDate.format(
-//				DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.of("Europe/Copenhagen")));
-//		return (fromTimeInIST.contains("pm") || fromTimeInIST.contains("am") && toTimeInIST.contains("am"))
-//				? fromDateInIST + " at " + fromTimeInIST + " to " + toDateInIST + " - " + toTimeInIST
-//				: fromDateInIST + " at " + fromTimeInIST + " - " + toTimeInIST;
 	}
 		
 	@Override
@@ -166,24 +149,24 @@ public class MeetingServiceImpl implements MeetingService {
 			Map<String, Object> message = new HashMap<>();
 			Meeting meeting = meetingStream.get();
 			if(meeting.getStartDateTime().isAfter(LocalDateTime.now())){
-				message.put("string", "Event will be start on the scheduled time.");
-				message.put("timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
-				return Response.generateResponse(HttpStatus.OK, null, message , false);
+				message.put("qrcode", meeting.getQrcode());
+				message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
+				message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
+				return Response.generateResponse(HttpStatus.OK, message, "Event will be start on scheduled time." , false);
 			}else if(meeting.getEndDateTime().isBefore(LocalDateTime.now())) {
-				message.put("string", "Meeting has expired.");
-				return Response.generateResponse(HttpStatus.OK, null, message, false);
+				return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "Meeting has expired.", false);
 			}else {
 				Optional<User> userStream = meeting.getMembers().stream().filter(mem->mem.getEmail().equals(payload.getEmail())).findFirst();
 				if (userStream.isPresent()) {
 					User currentUser = userStream.get();
 					inMeetingMembers.addMemberInMeeting(new MeetingMember(currentUser.getEmail(), currentUser.getUserId(),currentUser.getUserType(), 
 							currentUser.getName(), payload.getStreamId()), payload.getMeetingId() );
-					Set<MeetingMember> membersOfMeeting = inMeetingMembers.getMembersOfMeeting(payload.getMeetingId());
-					message.put("string", "You have joined");
-					return Response.generateResponse(HttpStatus.OK, membersOfMeeting, message, true);
+					message.put("qrcode", meeting.getQrcode());
+					message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
+					message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
+					return Response.generateResponse(HttpStatus.OK, message, "Valid url", true);
 				}else {
-					message.put("string", "You are not member of this event.");
-					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, message, false);
+					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "You are not member of this event.", false);
 				}
 			}
 		}
@@ -212,10 +195,10 @@ public class MeetingServiceImpl implements MeetingService {
 	
 	public User getUser(long userId) {
 		List<User> users = new ArrayList<>();
-		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
-		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
-//		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
-//		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
+//		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
+//		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
+		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+		users.add(new User(12345, "Raj", "star", "pankaj.raj@oodles.io"));
 		
 		
 //		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
