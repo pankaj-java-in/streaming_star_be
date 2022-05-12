@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -54,8 +53,8 @@ public class MeetingServiceImpl implements MeetingService {
 	@Autowired AmazonS3 amazonS3;
 	
 	private static final Logger log = LoggerFactory.getLogger(MeetingServiceImpl.class);
-	//private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/event?meet_id=";
-	private String meetingUrlPrefix="http://localhost/thestreamingstars/outside/join-event?meet_id=";
+	private String meetingUrlPrefix="http://www.thestreamingstars.com/outside/join-event?meet_id=";
+	//private String meetingUrlPrefix="http://localhost/thestreamingstars/outside/join-event?meet_id=";
 	//private String meetingUrlPrefix ="http://13.41.68.244:8080/join?meetId=";
 	
 	@Value("${cloud.aws.bucket.name}")
@@ -156,7 +155,7 @@ public class MeetingServiceImpl implements MeetingService {
 				message.put("qrcode", getUser(payload.getEmail()).getUserType().equals("star") ? meeting.getStarQrcode() : meeting.getGuestQrcode());
 				message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
 				message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
-				message.put("iframe-url", "http://13.41.68.244:81/?roomName="+meeting.getMeetingId()+"&streamName="+payload.getEmail());
+				message.put("iframe-url", "https://stage.oodlestech.in/?roomName="+meeting.getMeetingId()+"&streamName="+payload.getEmail());
 				return Response.generateResponse(HttpStatus.OK, message, "Event will be start on scheduled time." , false);
 			}else if(meeting.getEndDateTime().isBefore(LocalDateTime.now())) {
 				return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "Meeting has expired.", false);
@@ -169,7 +168,7 @@ public class MeetingServiceImpl implements MeetingService {
 					message.put("qrcode", getUser(payload.getEmail()).getUserType().equals("star") ? meeting.getStarQrcode() : meeting.getGuestQrcode());
 					message.put("start-timestamp", Timestamp.valueOf(meeting.getStartDateTime()).getTime());
 					message.put("end-timestamp", Timestamp.valueOf(meeting.getEndDateTime()).getTime());
-					message.put("iframe-url", "http://13.41.68.244:81/?roomName="+meeting.getMeetingId()+"&streamName="+payload.getEmail());
+					message.put("iframe-url", "https://stage.oodlestech.in/?roomName="+meeting.getMeetingId()+"&streamName="+payload.getEmail());
 					return Response.generateResponse(HttpStatus.OK, message, "Valid url", true);
 				}else {
 					return Response.generateResponse(HttpStatus.NOT_ACCEPTABLE, null, "You are not member of this event.", false);
