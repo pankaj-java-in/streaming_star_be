@@ -200,10 +200,10 @@ public class MeetingServiceImpl implements MeetingService {
 	
 	public User getUser(long userId) {
 		List<User> users = new ArrayList<>();
-//		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
-//		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
-		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
-		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
+		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
+		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
+//		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+//		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		
 		
 //		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
@@ -220,10 +220,10 @@ public class MeetingServiceImpl implements MeetingService {
 	
 	public User getUser(String email) {
 		List<User> users = new ArrayList<>();
-//		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
-//		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
-		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
-		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
+		users.add(new User(1234, "Quintin", "guest", "quintin@thestreamingstars.com"));
+		users.add(new User(12345, "Kos", "star", "kverweij@viak.nl"));
+//		users.add(new User(1234, "Pankaj", "guest", "pankaj.raj@oodles.io"));
+//		users.add(new User(12345, "Raj", "star", "pankaj.java.in@gmail.com"));
 		Optional<User> userStream = users.stream().filter(user->user.getEmail().equals(email)).findFirst();
 		if (userStream.isPresent()) {
 			return userStream.get();
